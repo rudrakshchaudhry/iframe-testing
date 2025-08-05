@@ -247,8 +247,55 @@
     </div>
 
     <script>
-      // Chat Widget Functionality
+      // Chat Widget Functionality with State Persistence
       let isWidgetOpen = false;
+      let chatIframe = null;
+      let chatSessionId = null;
+
+      // Generate or retrieve session ID for chat persistence
+      function getChatSessionId() {
+        if (!chatSessionId) {
+          chatSessionId = sessionStorage.getItem("eea-chat-session-id");
+          if (!chatSessionId) {
+            chatSessionId =
+              "eea-chat-" +
+              Date.now() +
+              "-" +
+              Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem("eea-chat-session-id", chatSessionId);
+          }
+        }
+        return chatSessionId;
+      }
+
+      // Persist widget state across page loads
+      function saveWidgetState() {
+        const state = {
+          isOpen: isWidgetOpen,
+          hasVisited: true,
+          sessionId: getChatSessionId(),
+          timestamp: Date.now(),
+        };
+        sessionStorage.setItem("eea-chat-widget-state", JSON.stringify(state));
+      }
+
+      // Restore widget state
+      function restoreWidgetState() {
+        try {
+          const savedState = sessionStorage.getItem("eea-chat-widget-state");
+          if (savedState) {
+            const state = JSON.parse(savedState);
+            // Restore session if it's recent (within 4 hours)
+            if (Date.now() - state.timestamp < 4 * 60 * 60 * 1000) {
+              chatSessionId = state.sessionId;
+              return state;
+            }
+          }
+        } catch (e) {
+          console.log("Could not restore chat state:", e);
+        }
+        return null;
+      }
 
       function toggleChatWidget() {
         const modal = document.getElementById("chatModal");
@@ -258,15 +305,69 @@
 
         if (isWidgetOpen) {
           modal.classList.add("show");
-          // Hide notification badge when opened
           badge.style.display = "none";
-          // Track widget opening
-          console.log("Chat widget opened");
+
+          // Initialize iframe with session persistence
+          if (!chatIframe) {
+            initializeChatIframe();
+          }
+
+          console.log("Chat widget opened with session:", getChatSessionId());
         } else {
           modal.classList.remove("show");
           console.log("Chat widget closed");
         }
+
+        saveWidgetState();
       }
+
+      // Initialize iframe with session persistence
+      function initializeChatIframe() {
+        chatIframe = document.querySelector(".chat-widget-iframe");
+        const sessionId = getChatSessionId();
+
+        // Add session parameter to maintain state
+        const baseUrl = "https://rudraksh.dlb4m0ev71wla.amplifyapp.com/";
+        const urlWithSession = `${baseUrl}?session=${sessionId}&embedded=true&parent=${encodeURIComponent(
+          window.location.origin
+        )}`;
+
+        // Only set src if it's different to avoid reload
+        if (chatIframe.src !== urlWithSession) {
+          chatIframe.src = urlWithSession;
+        }
+      }
+
+      // Handle URL changes in parent window (for SPA navigation)
+      let currentUrl = window.location.href;
+      function handleUrlChange() {
+        if (window.location.href !== currentUrl) {
+          currentUrl = window.location.href;
+          console.log("Parent URL changed to:", currentUrl);
+
+          // Update iframe about URL change if it's loaded
+          if (chatIframe && chatIframe.contentWindow) {
+            try {
+              chatIframe.contentWindow.postMessage(
+                {
+                  type: "PARENT_URL_CHANGED",
+                  url: currentUrl,
+                  sessionId: getChatSessionId(),
+                },
+                "*"
+              );
+            } catch (e) {
+              console.log("Could not notify iframe of URL change");
+            }
+          }
+        }
+      }
+
+      // Listen for popstate (back/forward button)
+      window.addEventListener("popstate", handleUrlChange);
+
+      // Periodically check for URL changes (for SPA routing)
+      setInterval(handleUrlChange, 500);
 
       // Close widget when clicking outside (optional)
       document.addEventListener("click", function (event) {
@@ -282,16 +383,49 @@
         }
       });
 
-      // Show notification badge after 5 seconds (demo purpose)
-      setTimeout(() => {
+      // Handle messages from iframe
+      window.addEventListener("message", function (event) {
+        // Security check - only accept messages from your chatbot domain
+        if (event.origin !== "https://rudraksh.dlb4m0ev71wla.amplifyapp.com") {
+          return;
+        }
+
+        if (event.data.type === "CHAT_READY") {
+          console.log("Chat iframe is ready");
+        } else if (event.data.type === "RESIZE_CHAT") {
+          // Handle dynamic resizing if needed
+          const modal = document.getElementById("chatModal");
+          if (event.data.height && event.data.height > 300) {
+            modal.style.height = Math.min(event.data.height, 700) + "px";
+          }
+        }
+      });
+
+      // Show notification badge logic
+      function showNotificationBadge() {
         const badge = document.getElementById("chatBadge");
-        badge.style.display = "flex";
-      }, 5000);
+        const savedState = restoreWidgetState();
+
+        // Only show badge if user hasn't visited before or if there are new messages
+        if (!savedState || !savedState.hasVisited) {
+          setTimeout(() => {
+            badge.style.display = "flex";
+          }, 5000);
+        }
+      }
 
       // Handle iframe load events
-      document.querySelector(".chat-widget-iframe").onload = function () {
-        console.log("Support chat loaded successfully");
-      };
+      function setupIframeHandlers() {
+        const iframe = document.querySelector(".chat-widget-iframe");
+        iframe.onload = function () {
+          console.log("Support chat loaded successfully");
+          chatIframe = iframe;
+        };
+
+        iframe.onerror = function () {
+          console.error("Failed to load chat iframe");
+        };
+      }
 
       // Keyboard shortcut to toggle widget (Ctrl/Cmd + K)
       document.addEventListener("keydown", function (event) {
@@ -301,14 +435,49 @@
         }
       });
 
-      // Optional: Auto-show widget on first visit
-      const hasVisited = localStorage.getItem("chat-widget-visited");
-      if (!hasVisited) {
-        setTimeout(() => {
-          toggleChatWidget();
-          localStorage.setItem("chat-widget-visited", "true");
-        }, 3000); // Show after 3 seconds on first visit
-      }
+      // Initialize widget on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        setupIframeHandlers();
+
+        const savedState = restoreWidgetState();
+
+        if (savedState) {
+          // Restore previous state
+          if (savedState.isOpen) {
+            setTimeout(() => toggleChatWidget(), 100);
+          }
+        } else {
+          // First visit - auto-show after delay
+          setTimeout(() => {
+            toggleChatWidget();
+          }, 3000);
+        }
+
+        showNotificationBadge();
+      });
+
+      // Save state before page unload
+      window.addEventListener("beforeunload", function () {
+        saveWidgetState();
+      });
+
+      // Handle page visibility changes (tab switching)
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "visible" && chatIframe) {
+          // Notify iframe that tab became visible
+          try {
+            chatIframe.contentWindow.postMessage(
+              {
+                type: "TAB_VISIBLE",
+                sessionId: getChatSessionId(),
+              },
+              "*"
+            );
+          } catch (e) {
+            console.log("Could not notify iframe of visibility change");
+          }
+        }
+      });
     </script>
   </body>
 </html>
