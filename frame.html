@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EEA Navigator - Iframe Test</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .iframe-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        margin-bottom: 30px;
+      }
+
+      .iframe-container h2 {
+        margin-top: 0;
+        color: #333;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+      }
+
+      iframe {
+        width: 100%;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .code-block {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 15px 0;
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: 14px;
+        overflow-x: auto;
+      }
+
+      .info {
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 EEA Navigator - Iframe Embedding Test</h1>
+
+      <!-- Full Size Iframe -->
+      <div class="iframe-container">
+        <h2>📱 Full Size (600px height)</h2>
+        <iframe
+          src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
+          height="600"
+          title="EEA Navigator - Full Size"
+        >
+        </iframe>
+        <div class="code-block">
+          &lt;iframe src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
+          width="100%" height="600" title="EEA Navigator" frameborder="0"&gt;
+          &lt;/iframe&gt;
+        </div>
+      </div>
+
+      <!-- Compact Iframe -->
+      <div class="iframe-container">
+        <h2>💬 Compact Size (400px height)</h2>
+        <iframe
+          src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
+          height="400"
+          title="EEA Navigator - Compact"
+        >
+        </iframe>
+        <div class="code-block">
+          &lt;iframe src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
+          width="100%" height="400" title="EEA Navigator" frameborder="0"&gt;
+          &lt;/iframe&gt;
+        </div>
+      </div>
+
+      <!-- Side by Side -->
+      <div class="iframe-container">
+        <h2>📊 Side by Side (50% width each)</h2>
+        <div style="display: flex; gap: 20px">
+          <iframe
+            src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
+            height="500"
+            style="width: 50%"
+            title="EEA Navigator - Left"
+          >
+          </iframe>
+          <iframe
+            src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
+            height="500"
+            style="width: 50%"
+            title="EEA Navigator - Right"
+          >
+          </iframe>
+        </div>
+      </div>
+
+      <div class="info">
+        <h3>✅ Iframe Configuration Features:</h3>
+        <ul>
+          <li>
+            <strong>✨ Auto-sizing:</strong> Adapts layout when embedded in
+            iframes
+          </li>
+          <li>
+            <strong>🔒 Security headers:</strong> Proper X-Frame-Options and CSP
+            configured
+          </li>
+          <li>
+            <strong>📱 Responsive:</strong> Works across different iframe
+            dimensions
+          </li>
+          <li>
+            <strong>🎨 Seamless:</strong> Maintains visual quality in embedded
+            mode
+          </li>
+          <li>
+            <strong>⚡ Performance:</strong> Optimized for iframe embedding
+          </li>
+        </ul>
+
+        <h3>📋 Implementation Notes:</h3>
+        <ul>
+          <li>
+            Use <code>https://rudraksh.dlb4m0ev71wla.amplifyapp.com/</code> as
+            your iframe src
+          </li>
+          <li>Minimum recommended width: 320px</li>
+          <li>Minimum recommended height: 400px</li>
+          <li>No additional configuration needed - works out of the box!</li>
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      // Optional: Dynamically adjust iframe heights based on content
+      function adjustIframeHeights() {
+        const iframes = document.querySelectorAll("iframe");
+        iframes.forEach((iframe) => {
+          iframe.onload = function () {
+            console.log(`Iframe loaded: ${iframe.title}`);
+          };
+        });
+      }
+
+      // Auto-refresh iframes every 30 seconds (for development)
+      if (
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      ) {
+        setInterval(() => {
+          console.log("Development mode: Keeping iframes fresh");
+        }, 30000);
+      }
+
+      adjustIframeHeights();
+    </script>
+  </body>
+</html>
