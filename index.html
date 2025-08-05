@@ -191,9 +191,8 @@
     <div class="demo-content">
       <h1>🚀 EEA Navigator Support Widget</h1>
       <p>
-        This page is the EEA Navigator as a support agent widget.
-        Click the chat button in the bottom right corner to open the support
-        chatbot!
+        This page is the EEA Navigator as a support agent widget. Click the chat
+        button in the bottom right corner to open the support chatbot!
       </p>
       <p>
         The widget provides instant access to help and information while keeping
@@ -233,12 +232,71 @@
     </div>
 
     <script>
-      // Chat Widget Functionality
+      // Chat Widget Functionality with Session Persistence
       let isWidgetOpen = false;
+      let sessionId = null;
+      let chatHistory = [];
+
+      // Generate or retrieve session ID
+      function initializeSession() {
+        sessionId = localStorage.getItem("chat-session-id");
+        if (!sessionId) {
+          sessionId =
+            "session_" +
+            Date.now() +
+            "_" +
+            Math.random().toString(36).substr(2, 9);
+          localStorage.setItem("chat-session-id", sessionId);
+        }
+
+        // Load chat history
+        const savedHistory = localStorage.getItem("chat-history-" + sessionId);
+        if (savedHistory) {
+          try {
+            chatHistory = JSON.parse(savedHistory);
+            console.log(
+              "Restored chat history with",
+              chatHistory.length,
+              "messages"
+            );
+          } catch (e) {
+            console.warn("Could not parse saved chat history");
+            chatHistory = [];
+          }
+        }
+      }
+
+      // Save chat state
+      function saveChatState() {
+        localStorage.setItem("chat-widget-open", isWidgetOpen);
+        localStorage.setItem(
+          "chat-history-" + sessionId,
+          JSON.stringify(chatHistory)
+        );
+        localStorage.setItem("chat-last-activity", Date.now());
+      }
+
+      // Restore chat state
+      function restoreChatState() {
+        const wasOpen = localStorage.getItem("chat-widget-open") === "true";
+        const lastActivity = localStorage.getItem("chat-last-activity");
+
+        // Auto-restore if chat was open and activity was recent (within 1 hour)
+        if (
+          wasOpen &&
+          lastActivity &&
+          Date.now() - parseInt(lastActivity) < 3600000
+        ) {
+          setTimeout(() => {
+            toggleChatWidget();
+          }, 1000);
+        }
+      }
 
       function toggleChatWidget() {
         const modal = document.getElementById("chatModal");
         const badge = document.getElementById("chatBadge");
+        const iframe = document.querySelector(".chat-widget-iframe");
 
         isWidgetOpen = !isWidgetOpen;
 
@@ -246,12 +304,24 @@
           modal.classList.add("show");
           // Hide notification badge when opened
           badge.style.display = "none";
-          // Track widget opening
-          console.log("Chat widget opened");
+
+          // Add session parameter to iframe URL to maintain continuity
+          const baseUrl = "https://rudraksh.dlb4m0ev71wla.amplifyapp.com/";
+          const sessionUrl =
+            baseUrl + "?session=" + sessionId + "&restore=true";
+
+          // Only reload iframe if it's a new session or different URL
+          if (iframe.src !== sessionUrl) {
+            iframe.src = sessionUrl;
+          }
+
+          console.log("Chat widget opened with session:", sessionId);
         } else {
           modal.classList.remove("show");
           console.log("Chat widget closed");
         }
+
+        saveChatState();
       }
 
       // Close widget when clicking outside (optional)
@@ -268,15 +338,63 @@
         }
       });
 
+      // Save state before page unload
+      window.addEventListener("beforeunload", function () {
+        saveChatState();
+      });
+
+      // Listen for messages from iframe (if supported by your chat service)
+      window.addEventListener("message", function (event) {
+        // Verify origin for security
+        if (event.origin !== "https://rudraksh.dlb4m0ev71wla.amplifyapp.com") {
+          return;
+        }
+
+        // Handle chat messages to save history
+        if (event.data && event.data.type === "chat-message") {
+          chatHistory.push({
+            timestamp: Date.now(),
+            message: event.data.message,
+            sender: event.data.sender,
+          });
+          saveChatState();
+        }
+
+        // Handle session restoration
+        if (event.data && event.data.type === "session-ready") {
+          console.log("Chat session ready");
+        }
+      });
+
       // Show notification badge after 5 seconds (demo purpose)
       setTimeout(() => {
         const badge = document.getElementById("chatBadge");
-        badge.style.display = "flex";
+        // Only show badge if chat hasn't been used recently
+        const lastActivity = localStorage.getItem("chat-last-activity");
+        if (!lastActivity || Date.now() - parseInt(lastActivity) > 86400000) {
+          // 24 hours
+          badge.style.display = "flex";
+        }
       }, 5000);
 
       // Handle iframe load events
       document.querySelector(".chat-widget-iframe").onload = function () {
         console.log("Support chat loaded successfully");
+
+        // Try to send session info to iframe (if it supports postMessage)
+        setTimeout(() => {
+          const iframe = document.querySelector(".chat-widget-iframe");
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage(
+              {
+                type: "session-restore",
+                sessionId: sessionId,
+                history: chatHistory,
+              },
+              "https://rudraksh.dlb4m0ev71wla.amplifyapp.com"
+            );
+          }
+        }, 1000);
       };
 
       // Keyboard shortcut to toggle widget (Ctrl/Cmd + K)
@@ -287,14 +405,30 @@
         }
       });
 
-      // Optional: Auto-show widget on first visit
-      const hasVisited = localStorage.getItem("chat-widget-visited");
-      if (!hasVisited) {
-        setTimeout(() => {
-          toggleChatWidget();
-          localStorage.setItem("chat-widget-visited", "true");
-        }, 3000); // Show after 3 seconds on first visit
-      }
+      // Initialize session and restore state on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        initializeSession();
+        restoreChatState();
+
+        // Check if this is first visit
+        const hasVisited = localStorage.getItem("chat-widget-visited");
+        if (!hasVisited) {
+          setTimeout(() => {
+            if (!isWidgetOpen) {
+              // Only auto-open if not already restored
+              toggleChatWidget();
+            }
+            localStorage.setItem("chat-widget-visited", "true");
+          }, 3000);
+        }
+      });
+
+      // Periodic state saving (every 30 seconds while chat is open)
+      setInterval(() => {
+        if (isWidgetOpen) {
+          saveChatState();
+        }
+      }, 30000);
     </script>
   </body>
 </html>
