@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EEA Navigator - Iframe Test</title>
+    <title>EEA Navigator - Support Widget</title>
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -14,176 +14,287 @@
         min-height: 100vh;
       }
 
-      .container {
-        max-width: 1200px;
+      .demo-content {
+        max-width: 800px;
         margin: 0 auto;
-      }
-
-      h1 {
-        text-align: center;
-        color: white;
-        margin-bottom: 30px;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-      }
-
-      .iframe-container {
         background: white;
         border-radius: 12px;
-        padding: 20px;
+        padding: 40px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        text-align: center;
+      }
+
+      .demo-content h1 {
+        color: #333;
+        margin-bottom: 20px;
+      }
+
+      .demo-content p {
+        color: #666;
+        font-size: 18px;
+        line-height: 1.6;
         margin-bottom: 30px;
       }
 
-      .iframe-container h2 {
-        margin-top: 0;
-        color: #333;
-        border-bottom: 2px solid #eee;
-        padding-bottom: 10px;
-      }
-
-      iframe {
-        width: 100%;
+      /* Chat Widget Button */
+      .chat-widget-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        transition: all 0.3s ease;
         border: none;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
 
-      .code-block {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 6px;
-        padding: 15px;
-        margin: 15px 0;
-        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-        font-size: 14px;
-        overflow-x: auto;
+      .chat-widget-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
       }
 
-      .info {
-        background: #e3f2fd;
-        border-left: 4px solid #2196f3;
-        padding: 15px;
-        margin: 15px 0;
+      .chat-widget-button svg {
+        width: 24px;
+        height: 24px;
+        fill: white;
+      }
+
+      /* Chat Widget Modal */
+      .chat-widget-modal {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 400px;
+        height: 600px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        z-index: 1001;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideUp 0.3s ease;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .chat-widget-modal.show {
+        display: flex;
+      }
+
+      .chat-widget-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .chat-widget-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .chat-widget-close {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 20px;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         border-radius: 4px;
+        transition: background 0.2s ease;
+      }
+
+      .chat-widget-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .chat-widget-iframe {
+        flex: 1;
+        border: none;
+        width: 100%;
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 480px) {
+        .chat-widget-modal {
+          bottom: 90px;
+          right: 10px;
+          left: 10px;
+          width: auto;
+          height: 500px;
+        }
+
+        .chat-widget-button {
+          bottom: 15px;
+          right: 15px;
+        }
+      }
+
+      /* Badge for notifications */
+      .chat-widget-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #ff4757;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>🚀 EEA Navigator - Iframe Embedding Test</h1>
+    <!-- Demo Content -->
+    <div class="demo-content">
+      <h1>🚀 EEA Navigator Support Widget</h1>
+      <p>
+        This page demonstrates the EEA Navigator as a support agent widget.
+        Click the chat button in the bottom right corner to open the support
+        chatbot!
+      </p>
+      <p>
+        The widget provides instant access to help and information while keeping
+        your page uncluttered. Perfect for customer support, FAQ assistance, and
+        interactive guidance.
+      </p>
+    </div>
 
-      <!-- Full Size Iframe -->
-      <div class="iframe-container">
-        <h2>📱 Full Size (600px height)</h2>
-        <iframe
-          src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
-          height="600"
-          title="EEA Navigator - Full Size"
-        >
-        </iframe>
-        <div class="code-block">
-          &lt;iframe src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
-          width="100%" height="600" title="EEA Navigator" frameborder="0"&gt;
-          &lt;/iframe&gt;
-        </div>
+    <!-- Chat Widget Button -->
+    <button class="chat-widget-button" onclick="toggleChatWidget()">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M6,9H18V11H6V9M6,5H18V7H6V5M6,13H16V15H6V13Z"
+        />
+      </svg>
+      <!-- Optional notification badge -->
+      <div class="chat-widget-badge" id="chatBadge" style="display: none">
+        1
       </div>
+    </button>
 
-      <!-- Compact Iframe -->
-      <div class="iframe-container">
-        <h2>💬 Compact Size (400px height)</h2>
-        <iframe
-          src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
-          height="400"
-          title="EEA Navigator - Compact"
-        >
-        </iframe>
-        <div class="code-block">
-          &lt;iframe src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
-          width="100%" height="400" title="EEA Navigator" frameborder="0"&gt;
-          &lt;/iframe&gt;
-        </div>
+    <!-- Chat Widget Modal -->
+    <div class="chat-widget-modal" id="chatModal">
+      <div class="chat-widget-header">
+        <h3 class="chat-widget-title">💬 EEA Navigator Support</h3>
+        <button class="chat-widget-close" onclick="toggleChatWidget()">
+          ×
+        </button>
       </div>
-
-      <!-- Side by Side -->
-      <div class="iframe-container">
-        <h2>📊 Side by Side (50% width each)</h2>
-        <div style="display: flex; gap: 20px">
-          <iframe
-            src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
-            height="500"
-            style="width: 50%"
-            title="EEA Navigator - Left"
-          >
-          </iframe>
-          <iframe
-            src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
-            height="500"
-            style="width: 50%"
-            title="EEA Navigator - Right"
-          >
-          </iframe>
-        </div>
-      </div>
-
-      <div class="info">
-        <h3>✅ Iframe Configuration Features:</h3>
-        <ul>
-          <li>
-            <strong>✨ Auto-sizing:</strong> Adapts layout when embedded in
-            iframes
-          </li>
-          <li>
-            <strong>🔒 Security headers:</strong> Proper X-Frame-Options and CSP
-            configured
-          </li>
-          <li>
-            <strong>📱 Responsive:</strong> Works across different iframe
-            dimensions
-          </li>
-          <li>
-            <strong>🎨 Seamless:</strong> Maintains visual quality in embedded
-            mode
-          </li>
-          <li>
-            <strong>⚡ Performance:</strong> Optimized for iframe embedding
-          </li>
-        </ul>
-
-        <h3>📋 Implementation Notes:</h3>
-        <ul>
-          <li>
-            Use <code>https://rudraksh.dlb4m0ev71wla.amplifyapp.com/</code> as
-            your iframe src
-          </li>
-          <li>Minimum recommended width: 320px</li>
-          <li>Minimum recommended height: 400px</li>
-          <li>No additional configuration needed - works out of the box!</li>
-        </ul>
-      </div>
+      <iframe
+        class="chat-widget-iframe"
+        src="https://rudraksh.dlb4m0ev71wla.amplifyapp.com/"
+        title="EEA Navigator Support Chat"
+        allow="microphone; camera"
+      >
+      </iframe>
     </div>
 
     <script>
-      // Optional: Dynamically adjust iframe heights based on content
-      function adjustIframeHeights() {
-        const iframes = document.querySelectorAll("iframe");
-        iframes.forEach((iframe) => {
-          iframe.onload = function () {
-            console.log(`Iframe loaded: ${iframe.title}`);
-          };
-        });
+      // Chat Widget Functionality
+      let isWidgetOpen = false;
+
+      function toggleChatWidget() {
+        const modal = document.getElementById("chatModal");
+        const badge = document.getElementById("chatBadge");
+
+        isWidgetOpen = !isWidgetOpen;
+
+        if (isWidgetOpen) {
+          modal.classList.add("show");
+          // Hide notification badge when opened
+          badge.style.display = "none";
+          // Track widget opening
+          console.log("Chat widget opened");
+        } else {
+          modal.classList.remove("show");
+          console.log("Chat widget closed");
+        }
       }
 
-      // Auto-refresh iframes every 30 seconds (for development)
-      if (
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1"
-      ) {
-        setInterval(() => {
-          console.log("Development mode: Keeping iframes fresh");
-        }, 30000);
-      }
+      // Close widget when clicking outside (optional)
+      document.addEventListener("click", function (event) {
+        const modal = document.getElementById("chatModal");
+        const button = document.querySelector(".chat-widget-button");
 
-      adjustIframeHeights();
+        if (
+          isWidgetOpen &&
+          !modal.contains(event.target) &&
+          !button.contains(event.target)
+        ) {
+          toggleChatWidget();
+        }
+      });
+
+      // Show notification badge after 5 seconds (demo purpose)
+      setTimeout(() => {
+        const badge = document.getElementById("chatBadge");
+        badge.style.display = "flex";
+      }, 5000);
+
+      // Handle iframe load events
+      document.querySelector(".chat-widget-iframe").onload = function () {
+        console.log("Support chat loaded successfully");
+      };
+
+      // Keyboard shortcut to toggle widget (Ctrl/Cmd + K)
+      document.addEventListener("keydown", function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key === "k") {
+          event.preventDefault();
+          toggleChatWidget();
+        }
+      });
+
+      // Optional: Auto-show widget on first visit
+      const hasVisited = localStorage.getItem("chat-widget-visited");
+      if (!hasVisited) {
+        setTimeout(() => {
+          toggleChatWidget();
+          localStorage.setItem("chat-widget-visited", "true");
+        }, 3000); // Show after 3 seconds on first visit
+      }
     </script>
   </body>
 </html>
